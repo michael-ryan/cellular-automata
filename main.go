@@ -1,9 +1,6 @@
 package main
 
 import (
-	"math"
-	"time"
-
 	pix "github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/michael-ryan/cellular-automata/cellular"
@@ -33,49 +30,26 @@ func run() {
 	done := make(chan any)
 	toDraw := make(chan []float64)
 
-	cellular.Render(toDraw, done, 10, 72, 128, HEIGHT, WIDTH) // todo pull fps from the user level maybe
+	cellular.Render(toDraw, done, 10, 128, 72, WIDTH, HEIGHT) // todo pull fps from the user level maybe
 
 	for !win.Closed() {
-		select {
-		case draw, ok := <-toDraw:
-			if !ok {
-				return
-			}
-			win.Canvas().SetPixels(premultiply(draw))
-			win.Update()
-		}
-	}
-}
-
-func render(drawChan chan<- []float64, doneChan <-chan any, fps uint) {
-	// barf shit down drawchan to render it
-
-	// fps^-1 * 1000 = milliseconds per frame
-	// 10fps -> (10)^-1 * 1000 = 0.1 * 1000 = 100
-	frameDuration := time.Duration(math.Pow(float64(fps), -1)) * time.Millisecond
-
-	fpsClock := time.NewTicker(frameDuration)
-
-	for {
-		select {
-		case <-fpsClock.C:
-			drawChan <- make([]float64, 4*WIDTH*HEIGHT)
-		case <-doneChan:
-			close(drawChan)
+		draw, ok := <-toDraw
+		if !ok {
 			return
 		}
+		win.Canvas().SetPixels(premultiply(draw))
+		win.Update()
 	}
 }
 
 func premultiply(pixels []float64) []uint8 {
 	premultiplied := make([]uint8, len(pixels))
 
-	for i := 0; i < len(pixels)/4; i++ {
-		alpha := pixels[i+3]
+	for i := 0; i < len(pixels); i += 4 {
 		for j := 0; j < 3; j++ {
-			premultiplied[i+j] = uint8(255 * (pixels[i+j] * alpha))
+			premultiplied[i+j] = uint8(pixels[i+j] * 255)
 		}
-		premultiplied[i+3] = uint8(255 * alpha)
+		premultiplied[i+3] = uint8(255)
 	}
 
 	return premultiplied

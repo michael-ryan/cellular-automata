@@ -1,7 +1,6 @@
 package cellular
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -10,12 +9,24 @@ import (
 // canvas represents a grid of virtual pixels (i.e. cells) for our automata, as it is unlikely we want every single real pixel to be
 type canvas struct {
 	cells [][]cell
-	// represents real pixel counts
+	// cell counts
 	width, height uint
+	// real pixel counts
+	realWidth, realHeight uint
+	// cell dimensions in pixels
+	cellWidth, cellHeight uint
 }
 
-func (c canvas) at(x, y uint) cell {
-	return c.cells[x][y]
+func (c canvas) at(x, y int) (cell, error) {
+	if x < 0 || x >= len(c.cells) {
+		return 0, fmt.Errorf("index x=%v off grid", x)
+	}
+
+	if y < 0 || y >= len(c.cells[0]) {
+		return 0, fmt.Errorf("index y=%v off grid", y)
+	}
+
+	return c.cells[x][y], nil
 }
 
 func newCanvas(width, height, realWidth, realHeight uint) canvas {
@@ -24,8 +35,14 @@ func newCanvas(width, height, realWidth, realHeight uint) canvas {
 	for x := range c.cells {
 		c.cells[x] = make([]cell, height)
 	}
-	c.width = realWidth
-	c.height = realHeight
+	c.width = width
+	c.height = height
+	c.realWidth = realWidth
+	c.realHeight = realHeight
+
+	c.cellWidth = c.realWidth / c.width
+	c.cellHeight = c.realHeight / c.height
+
 	return c
 }
 
@@ -35,8 +52,8 @@ type cell uint
 type predicate func(canvas, uint, uint) bool
 
 type transition struct {
-	p        predicate
-	newState cell
+	predicate predicate
+	newState  cell
 }
 
 type rgb struct {
@@ -50,82 +67,52 @@ type cellularAutomata interface {
 	getTransitionModel() [][]transition
 }
 
-/* thinking
-
-I want cell states to be a natural number. For example, in conway's game of life, we model 0 as dead and 1 as alive
-
-to model state transitions, we can have an array that is indexed by the current state, say 1 (alive)
-
-the elements of the array needs to be some sort of list of conditions. the first one found that is true, changes the cell's current state
-
-for example, in conway's:
-
-[
-	{ // index 0
-		are all neighbouring cells dead? -> 0
-		are all neighbouring cells alive? -> 1
-	},
-	{ // index 1
-		are there two or three neighbouring cells alive? -> 1
-		otherwise -> 0
-	}
-]
-
-(something like that, anyway)
-
-So we need a way of encoding these questions as a predicate
-
-The only sane way I can think of is a func(canvas) bool that is provided by config or something, that queries our canvas
-
-whoops, map doesn't make sense. What about an array of predicates? or a map from state to []predicate ???
-*/
-
-func Render(drawChan chan<- []float64, doneChan <-chan any, fps, height, width uint, pixelsY, pixelsX uint) {
+func Render(drawChan chan<- []float64, doneChan <-chan any, fps, width, height uint, pixelsX, pixelsY uint) {
 	// this must be run as a goroutine
-	go func(drawChan chan<- []float64, doneChan <-chan any, fps, height, width uint) {
+	go func(drawChan chan<- []float64, doneChan <-chan any, fps, width, height uint, pixelsX, pixelsY uint) {
 		// barf shit down drawchan to render it
 
-		// fps^-1 * 1000 = milliseconds per frame
-		// 10fps -> (10)^-1 * 1000 = 0.1 * 1000 = 100
+		// convert fps into seconds per frame
 		frameDuration := time.Duration(math.Pow(float64(fps), -1)*1000) * time.Millisecond
 		fpsClock := time.NewTicker(frameDuration)
 
-		c := newCanvas(width, height)
-		c.cells[3][2] = 1
-		c.cells[3][3] = 1
-		c.cells[3][4] = 1
+		c := newCanvas(width, height, pixelsX, pixelsY)
+
+		c.cells[0][2] = 1
+		c.cells[1][0] = 1
+		c.cells[1][2] = 1
+		c.cells[2][1] = 1
+		c.cells[2][2] = 1
 
 		conways := newConways()
-
-		pixelGrid := make([]float64, 4*pixelsX*pixelsY)
 
 		for {
 			select {
 			case <-fpsClock.C:
 				c = step(c, conways)
-				err := paint(&pixelGrid, c, conways)
-				if err != nil {
-					close(drawChan)
-					panic(fmt.Errorf("error painting grid: %w", err))
-				}
+				pixelGrid := paint(c, conways)
 				drawChan <- pixelGrid
 			case <-doneChan:
 				close(drawChan)
 				return
 			}
 		}
-	}(drawChan, doneChan, fps, height, width)
+	}(drawChan, doneChan, fps, width, height, pixelsX, pixelsY)
 }
 
 func step(c canvas, automata cellularAutomata) canvas {
-	new := newCanvas(uint(len(c.cells)), uint(len(c.cells[0])))
+	new := newCanvas(c.width, c.height, c.realWidth, c.realHeight)
 
 	model := automata.getTransitionModel()
 
 	for x := range len(c.cells) {
 		for y := range len(c.cells[0]) {
-			for _, t := range model[c.at(uint(x), uint(y))] {
-				if t.p(c, uint(x), uint(y)) {
+			thisCell, err := c.at(x, y)
+			if err != nil {
+				panic("Something has gone very wrong. We indexed outside of the grid in the step function.")
+			}
+			for _, t := range model[thisCell] {
+				if t.predicate(c, uint(x), uint(y)) {
 					new.cells[x][y] = t.newState
 					break
 				}
@@ -136,36 +123,45 @@ func step(c canvas, automata cellularAutomata) canvas {
 	return new
 }
 
-func paint(pixels *[]float64, c canvas, automata cellularAutomata) error {
-	if len(*pixels)%4 != 0 {
-		return errors.New("supplied pixel array length not a multiple of 4")
-	}
-
+func paint(c canvas, automata cellularAutomata) []float64 {
 	colourings := automata.getCellColouring()
 
-	virtualWidth := len(c.cells)
-	virtualHeight := len(c.cells[0])
+	pixels := make([]float64, 4*c.realWidth*c.realHeight)
 
-	pixelWidth := c.width / uint(virtualWidth)
-	pixelHeight := c.height / uint(virtualHeight)
-
-	i := 0
-	for x := range virtualWidth {
-		for y := range virtualHeight {
-			colour := colourings[c.at(uint(x), uint(y))]
-			(*pixels)[i] = colour.r
-			(*pixels)[i+1] = colour.g
-			(*pixels)[i+2] = colour.b
-			(*pixels)[i+3] = 1
-			i += 4
+	for x := range c.width {
+		for y := range c.height {
+			thisCell, err := c.at(int(x), int(y))
+			if err != nil {
+				panic("Something has gone very wrong. We indexed outside of the grid in the step function.")
+			}
+			setPixel(pixels, uint(x), uint(y), colourings[thisCell], c)
 		}
 	}
 
-	return nil
+	return pixels
 }
 
-func setPixel(pixels *[]float64, x, y uint, colour rgb) {
-	// urgh, some hard maths here to work out which elements to modify. I'm doing this tomorrow, laters
+func setPixel(pixels []float64, x, y uint, colour rgb, c canvas) []float64 {
+	pixelLeftBound := c.cellWidth * x
+	pixelRightBound := pixelLeftBound + c.cellWidth - 1
+	pixelLowerBound := c.cellHeight * y
+	pixelUpperBound := pixelLowerBound + c.cellHeight - 1
+
+	for thisX := pixelLeftBound; thisX <= pixelRightBound; thisX++ {
+		for thisY := pixelLowerBound; thisY <= pixelUpperBound; thisY++ {
+			redIndex := getRealPixelIndex(thisX, thisY, c.realWidth)
+			pixels[redIndex] = colour.r
+			pixels[redIndex+1] = colour.g
+			pixels[redIndex+2] = colour.b
+			pixels[redIndex+3] = 1
+		}
+	}
+
+	return pixels
+}
+
+func getRealPixelIndex(realX, realY, canvasWidth uint) uint {
+	return 4 * (realY*canvasWidth + realX)
 }
 
 type conways struct {
@@ -186,13 +182,34 @@ func newConways() cellularAutomata {
 
 	model := make([][]transition, 0)
 
+	countAliveNeighbours := func(c canvas, x, y int) uint {
+		neighbours := uint(0)
+		for offsetX := -1; offsetX <= 1; offsetX++ {
+			for offsetY := -1; offsetY <= 1; offsetY++ {
+				if offsetY == 0 && offsetX == 0 {
+					continue
+				}
+
+				neighbour, err := c.at(x+offsetX, y+offsetY)
+				if err != nil {
+					// gone off the grid, there's no neighbour here
+					continue
+				}
+
+				if neighbour == 1 {
+					neighbours++
+				}
+			}
+		}
+		return neighbours
+	}
+
 	// dead
 	state0 := make([]transition, 0)
 	state0 = append(state0, transition{
-		// 3 alive neighbours, become alive
-		p: func(c canvas, x, y uint) bool {
-			// todo
-			return false
+		// 2 or 3 alive neighbours, become alive
+		predicate: func(c canvas, x, y uint) bool {
+			return countAliveNeighbours(c, int(x), int(y)) == 3
 		},
 		newState: 1,
 	})
@@ -201,19 +218,25 @@ func newConways() cellularAutomata {
 	state1 := make([]transition, 0)
 	state1 = append(state1, transition{
 		// <2 alive neighbours, die
-		p: func(c canvas, x, y uint) bool {
-			// todo
-			return false
+		predicate: func(c canvas, x, y uint) bool {
+			return countAliveNeighbours(c, int(x), int(y)) < 2
 		},
 		newState: 0,
 	})
 	state1 = append(state1, transition{
 		// >3 alive neighbours, die
-		p: func(c canvas, x, y uint) bool {
-			// todo
-			return false
+		predicate: func(c canvas, x, y uint) bool {
+			return countAliveNeighbours(c, int(x), int(y)) > 3
 		},
 		newState: 0,
+	})
+	state1 = append(state1, transition{
+		// 2 or 3 alive neighbours, live
+		predicate: func(c canvas, x, y uint) bool {
+			alive := countAliveNeighbours(c, int(x), int(y))
+			return alive == 2 || alive == 3
+		},
+		newState: 1,
 	})
 	model = append(model, state1)
 
