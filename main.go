@@ -29,10 +29,23 @@ func run() {
 
 	done := make(chan any)
 	toDraw := make(chan []float64)
+	clicks := make(chan cellular.Coord, 1)
+	start := make(chan any)
 
-	cellular.Render(toDraw, done, 10, 128, 72, WIDTH, HEIGHT) // todo pull fps from the user level maybe
+	cellular.StartRenderer(toDraw, start, clicks, done, 15, WIDTH/4, HEIGHT/4, WIDTH, HEIGHT) // todo pull fps from the user level maybe
+
+	started := false
 
 	for !win.Closed() {
+		if win.JustPressed(pixel.MouseButton1) && !started {
+			location := win.MousePosition()
+			clicks <- [2]uint{uint(location.X), uint(location.Y)}
+		} else if win.JustPressed(pixel.KeyS) && !started {
+			close(clicks)
+			start <- struct{}{}
+			started = true
+		}
+
 		draw, ok := <-toDraw
 		if !ok {
 			return
