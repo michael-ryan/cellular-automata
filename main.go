@@ -1,8 +1,8 @@
 package main
 
 import (
-	pix "github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/michael-ryan/cellular-automata/cellular"
 )
 
@@ -12,17 +12,17 @@ const (
 )
 
 func main() {
-	pixelgl.Run(run)
+	opengl.Run(run)
 }
 
 func run() {
-	cfg := pixelgl.WindowConfig{
+	cfg := opengl.WindowConfig{
 		Title:  "Cellular Automata",
-		Bounds: pix.R(0, 0, float64(WIDTH), float64(HEIGHT)),
+		Bounds: pixel.R(0, 0, float64(WIDTH), float64(HEIGHT)),
 		VSync:  true,
 	}
 
-	win, err := pixelgl.NewWindow(cfg)
+	win, err := opengl.NewWindow(cfg)
 	if err != nil {
 		panic(err)
 	}
