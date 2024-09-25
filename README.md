@@ -1,12 +1,12 @@
 # Cellular Automata Simulator
 
-## Documentation
+## 📝 Documentation 
 
 For using the tool, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata).
 
 For constructing your own automata, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata/models).
 
-## Usage
+## 🚀 Usage 
 The simplest usage is as follows. In your `main` package, set up a `Config` object and supply it to `Launch`. The below code snippet should be all you need.
 ```Go
 package main
@@ -34,13 +34,13 @@ This will open a GUI window. You can click on cells to cycle their initial state
 
 Feel free to fiddle with the config parameters. You can swap out `Automaton` for other sample models (defined [here](models/)), or you can easily construct your own automata. For an example, see the implementation for Conway's Game of Life [here](models/conways.go).
 
-## Known issues & Planned Improvements
+## 🐛 Known Issues & Planned Improvements
 
 - Everything freezes up if the FPS is too high.
 - Analysis tools to record cell state counts and how they change over time.
 - Potentially a revamp to the `models/` API, to make it simpler to use.
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### *There's some error about x11, package 'gl' missing etc etc*
 
@@ -50,6 +50,6 @@ See requirements for the graphics library I'm using [here](https://github.com/go
 
 Please file an issue on this repository, and I'll take a look.
 
-## Contributing
+## 🤝 Contributing
 
 Feel free to file pull requests.
