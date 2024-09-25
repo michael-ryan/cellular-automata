@@ -30,6 +30,10 @@ type Automaton struct {
 	states        uint
 }
 
+// NewAutomaton constructs a new Automaton from a given [transitionSet] and colouring setup.
+// For a state n, transitions[n] should describe the transition rules and colouring[n] should define its render colour.
+// It is ill-advised to set up the [transitionSet] yourself. Rather, you should use [NewTransitionSet] and [transitionSet.AddTransition].
+// An example of how to set up an automaton is available here: https://github.com/michael-ryan/cellularautomata/blob/master/models/conways.go
 func NewAutomaton(transitions transitionSet, colouring []Rgb) (*Automaton, error) {
 	if len(transitions) != len(colouring) {
 		return nil, fmt.Errorf("mismatched lengths of transitions and colouring: %v != %v", len(transitions), len(colouring))
