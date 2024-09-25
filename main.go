@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
-	"github.com/michael-ryan/cellular-automata/cellular"
+	"github.com/michael-ryan/cellular-automata/render"
 )
 
 const (
@@ -29,10 +29,10 @@ func run() {
 
 	done := make(chan any)
 	toDraw := make(chan []float64)
-	clicks := make(chan cellular.Coord, 1)
+	clicks := make(chan render.Coord, 1)
 	start := make(chan any)
 
-	cellular.StartRenderer(toDraw, start, clicks, done, 30, WIDTH/2, HEIGHT/2, WIDTH, HEIGHT) // todo pull fps from the user level maybe
+	render.StartRenderer(toDraw, start, clicks, done, 30, WIDTH/2, HEIGHT/2, WIDTH, HEIGHT) // todo pull fps from the user level maybe
 
 	started := false
 

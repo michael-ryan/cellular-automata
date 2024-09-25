@@ -1,14 +1,41 @@
-package cellular
+package render
 
 import (
 	"math"
-	"sync"
 	"time"
 
-	"github.com/michael-ryan/cellular-automata/cellular/models"
+	"github.com/michael-ryan/cellular-automata/render/models"
 )
 
 type Coord [2]uint
+
+// canvas represents a grid of virtual pixels (i.e. cells) for our automata, as it is unlikely we want every single real pixel to be simulated as a cell
+type canvas struct { // todo this really shouldnt live here. also other things. move stuff around to make sense
+	Cells [][]uint
+	// cell counts
+	Width, Height uint
+	// real pixel counts
+	RealWidth, RealHeight uint
+	// cell dimensions in pixels
+	CellWidth, CellHeight uint
+}
+
+func NewCanvas(width, height, realWidth, realHeight uint) canvas {
+	c := canvas{}
+	c.Cells = make([][]uint, width)
+	for x := range c.Cells {
+		c.Cells[x] = make([]uint, height)
+	}
+	c.Width = width
+	c.Height = height
+	c.RealWidth = realWidth
+	c.RealHeight = realHeight
+
+	c.CellWidth = c.RealWidth / c.Width
+	c.CellHeight = c.RealHeight / c.Height
+
+	return c
+}
 
 func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-chan Coord, doneChan <-chan any, fps, width, height uint, pixelsX, pixelsY uint) {
 	// this must be run as a goroutine
@@ -19,16 +46,16 @@ func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-
 		frameDuration := time.Duration(math.Pow(float64(fps), -1)*1000) * time.Millisecond
 		fpsClock := time.NewTicker(frameDuration)
 
-		c := models.NewCanvas(width, height, pixelsX, pixelsY)
+		c := NewCanvas(width, height, pixelsX, pixelsY)
 
-		automata := models.NewLangtons()
+		automata := models.NewLangtons() // todo parameterise me
 
 		started := false
 
 		for !started {
 			select {
 			case <-fpsClock.C:
-				pixelGrid := paint(c, automata)
+				pixelGrid := paint(c, automata.GetColouring())
 				drawChan <- pixelGrid
 			case click, ok := <-clickChan:
 				if !ok {
@@ -36,7 +63,7 @@ func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-
 				}
 				location := getVirtualPixelXY(click, c)
 				oldCell := c.Cells[location[0]][location[1]]
-				newCell := (oldCell + 1) % models.Cell(len(automata.GetTransitionModel()))
+				newCell := (oldCell + 1) % automata.CountStates()
 				c.Cells[location[0]][location[1]] = newCell
 			case <-startChan:
 				started = true
@@ -46,8 +73,8 @@ func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-
 		for {
 			select {
 			case <-fpsClock.C:
-				c = step(c, automata)
-				pixelGrid := paint(c, automata)
+				c.Cells = automata.Step(c.Cells)
+				pixelGrid := paint(c, automata.GetColouring())
 				drawChan <- pixelGrid
 			case <-doneChan:
 				close(drawChan)
@@ -57,72 +84,12 @@ func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-
 	}(drawChan, doneChan, fps, width, height, pixelsX, pixelsY)
 }
 
-func step(c models.Canvas, automata models.CellularAutomata) models.Canvas {
-	new := models.NewCanvas(c.Width, c.Height, c.RealWidth, c.RealHeight)
-	new.Cells = make([][]models.Cell, len(c.Cells))
-	for x := range len(new.Cells) {
-		new.Cells[x] = make([]models.Cell, len(c.Cells[0]))
-		for y := range len(new.Cells[x]) {
-			new.Cells[x][y] = c.Cells[x][y]
-		}
-	}
-
-	model := automata.GetTransitionModel()
-
-	type edit struct {
-		x, y     int
-		newState models.Cell
-	}
-
-	wg := sync.WaitGroup{}
-	editChan := make(chan edit)
-
-	for x := range len(c.Cells) {
-		for y := range len(c.Cells[0]) {
-			// run each cell compute in its own goroutine
-			wg.Add(1)
-			go func(x, y int, c models.Canvas, model [][]models.Transition, editChan chan<- edit) {
-				defer wg.Done()
-				thisCell, err := c.At(x, y)
-				if err != nil {
-					panic("Something has gone very wrong. We indexed outside of the grid in the step function.")
-				}
-				for _, t := range model[thisCell] {
-					if t.Predicate(c, x, y) {
-						editChan <- edit{
-							x:        x,
-							y:        y,
-							newState: t.NewState,
-						}
-						return
-					}
-				}
-			}(x, y, c, model, editChan)
-		}
-	}
-
-	go func() {
-		wg.Wait()
-		close(editChan)
-	}()
-
-	for edit := range editChan {
-		new.Cells[edit.x][edit.y] = edit.newState
-	}
-
-	automata.Step()
-
-	return new
-}
-
-func paint(c models.Canvas, automata models.CellularAutomata) []float64 {
-	colourings := automata.GetCellColouring()
-
+func paint(c canvas, colourings []models.Rgb) []float64 {
 	pixels := make([]float64, 4*c.RealWidth*c.RealHeight)
 
 	for x := range c.Width {
 		for y := range c.Height {
-			thisCell, err := c.At(int(x), int(y))
+			thisCell, err := models.At(c.Cells, int(x), int(y))
 			if err != nil {
 				panic("Something has gone very wrong. We indexed outside of the grid in the step function.")
 			}
@@ -133,7 +100,7 @@ func paint(c models.Canvas, automata models.CellularAutomata) []float64 {
 	return pixels
 }
 
-func setPixel(pixels []float64, x, y uint, colour models.Rgb, c models.Canvas) []float64 {
+func setPixel(pixels []float64, x, y uint, colour models.Rgb, c canvas) []float64 {
 	pixelLeftBound := c.CellWidth * x
 	pixelRightBound := pixelLeftBound + c.CellWidth - 1
 	pixelLowerBound := c.CellHeight * y
@@ -152,7 +119,7 @@ func setPixel(pixels []float64, x, y uint, colour models.Rgb, c models.Canvas) [
 	return pixels
 }
 
-func getVirtualPixelXY(coord Coord, c models.Canvas) Coord {
+func getVirtualPixelXY(coord Coord, c canvas) Coord {
 	x := coord[0] / c.CellWidth
 	y := coord[1] / c.CellHeight
 	return Coord{x, y}
