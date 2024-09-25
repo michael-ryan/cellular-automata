@@ -7,7 +7,7 @@ import (
 	"github.com/michael-ryan/cellular-automata/render/models"
 )
 
-type Coord [2]uint
+type coord [2]uint
 
 // canvas represents a grid of virtual pixels (i.e. cells) for our automata, as it is unlikely we want every single real pixel to be simulated as a cell
 type canvas struct { // todo this really shouldnt live here. also other things. move stuff around to make sense
@@ -20,7 +20,7 @@ type canvas struct { // todo this really shouldnt live here. also other things. 
 	CellWidth, CellHeight uint
 }
 
-func NewCanvas(width, height, realWidth, realHeight uint) canvas {
+func newCanvas(width, height, realWidth, realHeight uint) canvas {
 	c := canvas{}
 	c.Cells = make([][]uint, width)
 	for x := range c.Cells {
@@ -37,34 +37,30 @@ func NewCanvas(width, height, realWidth, realHeight uint) canvas {
 	return c
 }
 
-func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-chan Coord, doneChan <-chan any, fps, width, height uint, pixelsX, pixelsY uint) {
+func startRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-chan coord, doneChan <-chan any, c Config) {
 	// this must be run as a goroutine
-	go func(drawChan chan<- []float64, doneChan <-chan any, fps, width, height uint, pixelsX, pixelsY uint) {
-		// barf pixel arrays down drawchan to render it
-
+	go func(drawChan chan<- []float64, doneChan <-chan any, c Config) {
 		// convert fps into seconds per frame
-		frameDuration := time.Duration(math.Pow(float64(fps), -1)*1000) * time.Millisecond
+		frameDuration := time.Duration(math.Pow(float64(c.Fps), -1)*1000) * time.Millisecond
 		fpsClock := time.NewTicker(frameDuration)
 
-		c := NewCanvas(width, height, pixelsX, pixelsY)
-
-		automata := models.NewLangtons() // todo parameterise me
+		canvas := newCanvas(c.CellsX, c.CellsY, c.WindowX, c.WindowY)
 
 		started := false
 
 		for !started {
 			select {
 			case <-fpsClock.C:
-				pixelGrid := paint(c, automata.GetColouring())
+				pixelGrid := paint(canvas, c.Automaton.GetColouring())
 				drawChan <- pixelGrid
 			case click, ok := <-clickChan:
 				if !ok {
 					continue
 				}
-				location := getVirtualPixelXY(click, c)
-				oldCell := c.Cells[location[0]][location[1]]
-				newCell := (oldCell + 1) % automata.CountStates()
-				c.Cells[location[0]][location[1]] = newCell
+				location := getVirtualPixelXY(click, canvas)
+				oldCell := canvas.Cells[location[0]][location[1]]
+				newCell := (oldCell + 1) % c.Automaton.CountStates()
+				canvas.Cells[location[0]][location[1]] = newCell
 			case <-startChan:
 				started = true
 			}
@@ -73,15 +69,15 @@ func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-
 		for {
 			select {
 			case <-fpsClock.C:
-				c.Cells = automata.Step(c.Cells)
-				pixelGrid := paint(c, automata.GetColouring())
+				canvas.Cells = c.Automaton.Step(canvas.Cells)
+				pixelGrid := paint(canvas, c.Automaton.GetColouring())
 				drawChan <- pixelGrid
 			case <-doneChan:
 				close(drawChan)
 				return
 			}
 		}
-	}(drawChan, doneChan, fps, width, height, pixelsX, pixelsY)
+	}(drawChan, doneChan, c)
 }
 
 func paint(c canvas, colourings []models.Rgb) []float64 {
@@ -119,10 +115,10 @@ func setPixel(pixels []float64, x, y uint, colour models.Rgb, c canvas) []float6
 	return pixels
 }
 
-func getVirtualPixelXY(coord Coord, c canvas) Coord {
-	x := coord[0] / c.CellWidth
-	y := coord[1] / c.CellHeight
-	return Coord{x, y}
+func getVirtualPixelXY(xy coord, c canvas) coord {
+	x := xy[0] / c.CellWidth
+	y := xy[1] / c.CellHeight
+	return coord{x, y}
 }
 
 func getRealPixelIndex(realX, realY, canvasWidth uint) uint {
