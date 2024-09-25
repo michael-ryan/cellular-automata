@@ -3,7 +3,7 @@ package models
 import "fmt"
 
 // Canvas represents a grid of virtual pixels (i.e. cells) for our automata, as it is unlikely we want every single real pixel to be simulated as a cell
-type Canvas struct { // todo this really shouldnt live here. also other things. move shit around to make sense
+type Canvas struct { // todo this really shouldnt live here. also other things. move stuff around to make sense
 	Cells [][]Cell
 	// cell counts
 	Width, Height uint

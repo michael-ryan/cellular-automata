@@ -13,7 +13,7 @@ type Coord [2]uint
 func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-chan Coord, doneChan <-chan any, fps, width, height uint, pixelsX, pixelsY uint) {
 	// this must be run as a goroutine
 	go func(drawChan chan<- []float64, doneChan <-chan any, fps, width, height uint, pixelsX, pixelsY uint) {
-		// barf shit down drawchan to render it
+		// barf pixel arrays down drawchan to render it
 
 		// convert fps into seconds per frame
 		frameDuration := time.Duration(math.Pow(float64(fps), -1)*1000) * time.Millisecond

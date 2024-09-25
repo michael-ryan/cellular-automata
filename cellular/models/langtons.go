@@ -44,7 +44,7 @@ func NewLangtons() CellularAutomata {
 			} else if langtons.direction == 3 {
 				targetX++
 			} else {
-				panic("fuck you there is no direction")
+				panic("no direction, unrecoverable error")
 			}
 
 			cell, err := c.At(targetX, targetY)
@@ -83,7 +83,7 @@ func NewLangtons() CellularAutomata {
 			} else if langtons.direction == 3 {
 				targetX++
 			} else {
-				panic("fuck you there is no direction")
+				panic("no direction, unrecoverable error")
 			}
 
 			cell, err := c.At(targetX, targetY)
