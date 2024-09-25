@@ -1,10 +1,10 @@
-package render
+package cellularautomata
 
 import (
 	"math"
 	"time"
 
-	"github.com/michael-ryan/cellular-automata/models"
+	"github.com/michael-ryan/cellularAutomata/models"
 )
 
 type coord [2]uint
