@@ -1,18 +1,14 @@
-# This workflow will test and build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
 name: Go
 
 on:
   push:
-    branches: [ "master" ]
+    branches: '**'
   pull_request:
     branches: [ "master" ]
 
 jobs:
-
-  build:
-    name: Test and Build
+  Test:
+    name: Test Go Code
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -25,13 +21,19 @@ jobs:
       with:
         go-version: '1.23.1'
 
+    - name: Install test dependencies
+      run: go install github.com/jstemmer/go-junit-report@latest
+
     - name: Test
-      run: go test -v ./...
+      run: go test -v 2>&1 ./... | go-junit-report -set-exit-code > report.xml
 
-    - name: Build
-      run: go build -v ./...
+    - name: Publish test Summary
+      uses: test-summary/action@v2
+      with:
+        paths: report.xml
+      if: always()
 
-  golangci:
+  Lint:
     name: Lint Go
     runs-on: ubuntu-latest
     steps:
@@ -49,3 +51,29 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.60
+
+  Release:
+    needs: [Test, Lint]
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23.1'
+
+    - name: Github Tag Bump
+      uses: anothrNick/github-tag-action@1.67.0
+      id: tag-version
+      env:
+        GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
+        WITH_V: true
+        DEFAULT_BUMP: patch
+
+    - name: Create Release
+      run: GOPROXY=proxy.golang.org go list -m github.com/michael-ryan/cellularautomata@${{ steps.tag-version.outputs.new_tag }}
