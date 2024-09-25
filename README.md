@@ -3,22 +3,28 @@
 ## Usage
 Set up a `Config` object and supply it to `Launch`:
 ```Go
+package main
+
 import (
-    "github.com/michael-ryan/cellularautomata/"
-    "github.com/michael-ryan/cellularautomata/models"
+	"github.com/michael-ryan/cellularautomata"
+	"github.com/michael-ryan/cellularautomata/models"
 )
 
-c := cellularautomata.Config{
-    Fps:       15,
-    CellsX:    72,
-    CellsY:    128,
-    WindowX:   720,
-    WindowY:   1280,
-    Automaton: models.NewForest(),
-}
+func main() {
+	c := cellularautomata.Config{
+		Fps:       15,
+		CellsX:    128,
+		CellsY:    72,
+		WindowX:   1280,
+		WindowY:   720,
+		Automaton: models.NewForest(),
+	}
 
-cellularautomata.Launch(c)
+	cellularautomata.Launch(c)
+}
 ```
+
+This will open a GUI window. You can click on cells to cycle their initial state, then press `S` on your keyboard to start the simulation.
 
 Note: Launch must be called from the main goroutine, due to a limitation in OpenGL.
 
