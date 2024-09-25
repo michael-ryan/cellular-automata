@@ -5,10 +5,12 @@ import (
 	"sync"
 )
 
+// Rgb describes a single pixel's RGB colour value. All member fields must be in the closed interval [0-1].
 type Rgb struct {
 	R, G, B float64
 }
 
+// At safely indexes the cell matrix c, returning an error if an off-grid value has been indexed.
 func At(c [][]uint, x, y int) (uint, error) {
 	if x < 0 || x >= len(c) {
 		return 0, fmt.Errorf("index x=%v off grid", x)
@@ -87,6 +89,7 @@ func (a Automaton) GetTransitionSet() transitionSet {
 	return transitionsCopy
 }
 
+// Step simulates a single step. Typically this would not be called manually.
 func (a Automaton) Step(c [][]uint) [][]uint {
 	new := make([][]uint, len(c))
 	for x := range len(new) {

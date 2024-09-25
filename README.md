@@ -1,5 +1,11 @@
 # Cellular Automata Simulator
 
+## Documentation
+
+For using the tool, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata).
+
+For constructing your own automata, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata/models).
+
 ## Usage
 Set up a `Config` object and supply it to `Launch`:
 ```Go
