@@ -45,7 +45,7 @@ func NewCanvas(width, height, realWidth, realHeight uint) Canvas {
 // Cell represents the state of a single Cell, as defined in cellStateModel
 type Cell uint
 
-type Predicate func(Canvas, uint, uint) bool
+type Predicate func(Canvas, int, int) bool
 
 type Transition struct {
 	Predicate Predicate
@@ -61,4 +61,5 @@ type cellColouring []Rgb
 type CellularAutomata interface {
 	GetCellColouring() cellColouring
 	GetTransitionModel() [][]Transition
+	Step()
 }

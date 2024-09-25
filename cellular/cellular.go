@@ -21,7 +21,7 @@ func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-
 
 		c := models.NewCanvas(width, height, pixelsX, pixelsY)
 
-		automata := models.NewForest()
+		automata := models.NewLangtons()
 
 		started := false
 
@@ -30,7 +30,10 @@ func StartRenderer(drawChan chan<- []float64, startChan <-chan any, clickChan <-
 			case <-fpsClock.C:
 				pixelGrid := paint(c, automata)
 				drawChan <- pixelGrid
-			case click := <-clickChan:
+			case click, ok := <-clickChan:
+				if !ok {
+					continue
+				}
 				location := getVirtualPixelXY(click, c)
 				oldCell := c.Cells[location[0]][location[1]]
 				newCell := (oldCell + 1) % models.Cell(len(automata.GetTransitionModel()))
@@ -85,7 +88,7 @@ func step(c models.Canvas, automata models.CellularAutomata) models.Canvas {
 					panic("Something has gone very wrong. We indexed outside of the grid in the step function.")
 				}
 				for _, t := range model[thisCell] {
-					if t.Predicate(c, uint(x), uint(y)) {
+					if t.Predicate(c, x, y) {
 						editChan <- edit{
 							x:        x,
 							y:        y,
@@ -107,6 +110,8 @@ func step(c models.Canvas, automata models.CellularAutomata) models.Canvas {
 		new.Cells[edit.x][edit.y] = edit.newState
 	}
 
+	automata.Step()
+
 	return new
 }
 
@@ -121,7 +126,7 @@ func paint(c models.Canvas, automata models.CellularAutomata) []float64 {
 			if err != nil {
 				panic("Something has gone very wrong. We indexed outside of the grid in the step function.")
 			}
-			setPixel(pixels, uint(x), uint(y), colourings[thisCell], c)
+			pixels = setPixel(pixels, uint(x), uint(y), colourings[thisCell], c)
 		}
 	}
 

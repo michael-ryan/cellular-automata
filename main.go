@@ -32,7 +32,7 @@ func run() {
 	clicks := make(chan cellular.Coord, 1)
 	start := make(chan any)
 
-	cellular.StartRenderer(toDraw, start, clicks, done, 15, WIDTH/4, HEIGHT/4, WIDTH, HEIGHT) // todo pull fps from the user level maybe
+	cellular.StartRenderer(toDraw, start, clicks, done, 30, WIDTH/2, HEIGHT/2, WIDTH, HEIGHT) // todo pull fps from the user level maybe
 
 	started := false
 
