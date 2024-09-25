@@ -5,7 +5,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
-	"github.com/michael-ryan/cellular-automata/render/models"
+	"github.com/michael-ryan/cellular-automata/models"
 )
 
 type Config struct {
@@ -15,10 +15,7 @@ type Config struct {
 
 var config Config
 
-// todo document everything and mop up todos
-
 // Launch opens a GUI window that renders the simulation.
-//
 // This function will block until the window is closed.
 func Launch(c Config) error {
 	if c.CellsX > c.WindowX {

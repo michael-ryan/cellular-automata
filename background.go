@@ -4,12 +4,12 @@ import (
 	"math"
 	"time"
 
-	"github.com/michael-ryan/cellular-automata/render/models"
+	"github.com/michael-ryan/cellular-automata/models"
 )
 
 type coord [2]uint
 
-// canvas represents a grid of virtual pixels (i.e. cells) for our automata, as it is unlikely we want every single real pixel to be simulated as a cell
+// canvas represents a grid of virtual pixels (i.e. cells) for our simulation, as it is unlikely we want every single real pixel to be simulated as a cell
 type canvas struct { // todo this really shouldnt live here. also other things. move stuff around to make sense
 	Cells [][]uint
 	// cell counts

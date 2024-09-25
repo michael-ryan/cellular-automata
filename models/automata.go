@@ -5,6 +5,10 @@ import (
 	"sync"
 )
 
+type Rgb struct {
+	R, G, B float64
+}
+
 func At(c [][]uint, x, y int) (uint, error) {
 	if x < 0 || x >= len(c) {
 		return 0, fmt.Errorf("index x=%v off grid", x)
@@ -15,10 +19,6 @@ func At(c [][]uint, x, y int) (uint, error) {
 	}
 
 	return c[x][y], nil
-}
-
-type Rgb struct { // todo this is superflouous, get rid
-	R, G, B float64
 }
 
 // Automaton contains all the information needed to describe a cellular automaton. You should use the [NewAutomaton] function to create one.
@@ -35,6 +35,17 @@ func NewAutomaton(transitions transitionSet, colouring []Rgb) (*Automaton, error
 
 	if len(transitions) <= 1 {
 		return nil, fmt.Errorf("it does not make sense to create an automaton that describes 0 or 1 states")
+	}
+
+	bad := false
+	for state, rgb := range colouring {
+		bad = bad || rgb.R > 1 || rgb.R < 0
+		bad = bad || rgb.G > 1 || rgb.G < 0
+		bad = bad || rgb.B > 1 || rgb.B < 0
+
+		if bad {
+			return nil, fmt.Errorf("colouring rule at index %v invalid, all values must be in the closed interval [0-1]: %+v", state, rgb)
+		}
 	}
 
 	states := uint(len(transitions))

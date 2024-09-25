@@ -9,6 +9,7 @@ type transition struct {
 
 type transitionSet [][]transition
 
+// NewTransitionSet creates a new transitionSet for use with [NewAutomaton]
 func NewTransitionSet() transitionSet {
 	return make(transitionSet, 0)
 }
