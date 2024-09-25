@@ -4,8 +4,8 @@
 Set up a `Config` object and supply it to `Launch`:
 ```Go
 import (
-    "github.com/michael-ryan/cellularAutomata/"
-    "github.com/michael-ryan/cellularAutomata/models"
+    "github.com/michael-ryan/cellularautomata/"
+    "github.com/michael-ryan/cellularautomata/models"
 )
 
 c := cellularautomata.Config{
@@ -24,6 +24,6 @@ Note: Launch must be called from the main goroutine, due to a limitation in Open
 
 You can easily construct your own automata. For an example, see the implementation for Conway's Game of Life [here](models/conways.go).
 
-# Building
+## Building
 
 See requirements [here](https://github.com/gopxl/pixel?tab=readme-ov-file#requirements).

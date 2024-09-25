@@ -5,7 +5,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
-	"github.com/michael-ryan/cellularAutomata/models"
+	"github.com/michael-ryan/cellularautomata/models"
 )
 
 type Config struct {

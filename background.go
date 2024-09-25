@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/michael-ryan/cellularAutomata/models"
+	"github.com/michael-ryan/cellularautomata/models"
 )
 
 type coord [2]uint

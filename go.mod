@@ -1,4 +1,4 @@
-module github.com/michael-ryan/cellularAutomata
+module github.com/michael-ryan/cellularautomata
 
 go 1.23.0
 
