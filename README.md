@@ -36,7 +36,6 @@ Feel free to fiddle with the config parameters. You can swap out `Automaton` for
 
 ## 🐛 Known Issues & Planned Improvements
 
-- Everything freezes up if the FPS is too high.
 - Analysis tools to record cell state counts and how they change over time.
 - Potentially a revamp to the `models/` API, to make it simpler to use.
 
