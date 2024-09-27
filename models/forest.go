@@ -38,11 +38,11 @@ func NewForest() *Automaton {
 	transitionSet := NewTransitionSet()
 
 	// dead rules
-	transitionSet.AddTransition(dead, alive, func(c [][]uint, y, x int) bool {
+	transitionSet.AddTransition(dead, alive, func(c [][]uint, x, y int) bool {
 		// grow a random tree
 		return rand.Float64() > 0.99999
 	})
-	transitionSet.AddTransition(dead, alive, func(c [][]uint, y, x int) bool {
+	transitionSet.AddTransition(dead, alive, func(c [][]uint, x, y int) bool {
 		// grow a tree from a neighbouring tree
 		for range countNeighbours(c, x, y, alive) {
 			if rand.Float64() > 0.99 {
@@ -54,17 +54,17 @@ func NewForest() *Automaton {
 	})
 
 	// alive rules
-	transitionSet.AddTransition(alive, onFire, func(c [][]uint, y, x int) bool {
+	transitionSet.AddTransition(alive, onFire, func(c [][]uint, x, y int) bool {
 		// lightning sets a tree on fire
 		return rand.Float64() > 0.9999
 	})
-	transitionSet.AddTransition(alive, onFire, func(c [][]uint, y, x int) bool {
+	transitionSet.AddTransition(alive, onFire, func(c [][]uint, x, y int) bool {
 		// neighbouring tree on fire, catch fire
 		return countNeighbours(c, x, y, onFire) > 0 && rand.Float64() > 0.25
 	})
 
 	// burning rules
-	transitionSet.AddTransition(onFire, dead, func(c [][]uint, y, x int) bool {
+	transitionSet.AddTransition(onFire, dead, func(c [][]uint, x, y int) bool {
 		// burn out
 		return rand.Float64() > 0.3
 	})
