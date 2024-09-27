@@ -26,15 +26,15 @@ func At(c [][]uint, x, y int) (uint, error) {
 // Automaton contains all the information needed to describe a cellular automaton. You should use the [NewAutomaton] function to create one.
 type Automaton struct {
 	colouring     []Rgb
-	transitionSet transitionSet
+	transitionSet TransitionSet
 	states        uint
 }
 
-// NewAutomaton constructs a new Automaton from a given [transitionSet] and colouring setup.
+// NewAutomaton constructs a new Automaton from a given TransitionSet and colouring setup.
 // For a state n, transitions[n] should describe the transition rules and colouring[n] should define its render colour.
-// It is ill-advised to set up the [transitionSet] yourself. Rather, you should use [NewTransitionSet] and [transitionSet.AddTransition].
+// It is ill-advised to set up the [TransitionSet] yourself. Rather, you should use [NewTransitionSet] and [TransitionSet.AddTransition].
 // An example of how to set up an automaton is available here: https://github.com/michael-ryan/cellularautomata/blob/master/models/conways.go
-func NewAutomaton(transitions transitionSet, colouring []Rgb) (*Automaton, error) {
+func NewAutomaton(transitions TransitionSet, colouring []Rgb) (*Automaton, error) {
 	if len(transitions) != len(colouring) {
 		return nil, fmt.Errorf("mismatched lengths of transitions and colouring: %v != %v", len(transitions), len(colouring))
 	}
@@ -84,8 +84,8 @@ func (a Automaton) GetColouring() []Rgb {
 
 // TransitionSet is an array of arrays of transition rules. All transition rules that state n can undergo should be in Transitions[n].
 // It is acceptable for any inner array to be an empty array, to denote a dead-end state.
-func (a Automaton) GetTransitionSet() transitionSet {
-	transitionsCopy := make(transitionSet, len(a.transitionSet))
+func (a Automaton) GetTransitionSet() TransitionSet {
+	transitionsCopy := make(TransitionSet, len(a.transitionSet))
 	for i := range a.transitionSet {
 		transitionsCopy[i] = make([]transition, len(a.transitionSet[i]))
 		copy(transitionsCopy[i], a.transitionSet[i])
@@ -115,7 +115,7 @@ func (a Automaton) Step(c [][]uint) [][]uint {
 		for y := range len(c[0]) {
 			// run each cell compute in its own goroutine
 			wg.Add(1)
-			go func(x, y int, c [][]uint, model transitionSet, editChan chan<- edit) {
+			go func(x, y int, c [][]uint, model TransitionSet, editChan chan<- edit) {
 				defer wg.Done()
 				thisCell, err := At(c, x, y)
 				if err != nil {

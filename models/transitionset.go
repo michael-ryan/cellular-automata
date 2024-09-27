@@ -7,18 +7,20 @@ type transition struct {
 	NewState  uint
 }
 
-type transitionSet [][]transition
+type TransitionSet [][]transition
 
-// NewTransitionSet creates a new transitionSet for use with [NewAutomaton]
-func NewTransitionSet() transitionSet {
-	return make(transitionSet, 0)
+// NewTransitionSet creates a new [TransitionSet] for use with [NewAutomaton]
+func NewTransitionSet() TransitionSet {
+	return make(TransitionSet, 0)
 }
 
-// AddTransition adds a transition to this transitionSet. States are 0-indexed.
+// AddTransition adds a transition to this [TransitionSet]. States are 0-indexed.
 // Rule is a func([][]uint, int int) bool that is called with:
 //   - c [][]uint: A 2D array that describes the all cell states, indexable as c[x][y] where c[0][0] is the bottom left cell
 //   - x: the cell in question's x coordinate
 //   - y: the cell in question's y coordinate
+//
+// The function should report whether the conditions are met for a state transition.
 //
 // It is encouraged to use the [At] function to safely index the cell states.
 //
@@ -31,7 +33,7 @@ func NewTransitionSet() transitionSet {
 //		}
 //		return target == 1
 //	})
-func (t *transitionSet) AddTransition(fromState, toState uint, rule predicate) {
+func (t *TransitionSet) AddTransition(fromState, toState uint, rule predicate) {
 	maxIndex := len(*t) - 1
 	if maxIndex < int(fromState) {
 		for range int(fromState) - maxIndex {
