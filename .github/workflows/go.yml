@@ -74,8 +74,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
         WITH_V: true
         DEFAULT_BUMP: patch
-        MAJOR_STRING_TOKEN: '- [X] Major'
-        MINOR_STRING_TOKEN: '- [X] Minor'
+        MAJOR_STRING_TOKEN: '- \[X\] Major'
+        MINOR_STRING_TOKEN: '- \[X\] Minor'
 
     - name: Create Release
       run: GOPROXY=proxy.golang.org go list -m github.com/michael-ryan/cellularautomata@${{ steps.tag-version.outputs.new_tag }}
