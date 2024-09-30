@@ -4,7 +4,9 @@
 
 For using the tool, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata).
 
-For constructing your own automata, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata/models).
+For the API to construct your own automata, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata/model).
+
+For example automata, see [here](examples/).
 
 ## 🚀 Usage 
 The simplest usage is as follows. In your `main` package, set up a `Config` object and supply it to `Launch`.
