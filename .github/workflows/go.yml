@@ -76,6 +76,7 @@ jobs:
         DEFAULT_BUMP: patch
         MAJOR_STRING_TOKEN: '- \[X\] Major'
         MINOR_STRING_TOKEN: '- \[X\] Minor'
+        NONE_STRING_TOKEN: 'skip-git-tag'
 
     - name: Create Release
-      run: GOPROXY=proxy.golang.org go list -m github.com/michael-ryan/cellularautomata@${{ steps.tag-version.outputs.new_tag }}
+      run: GOPROXY=proxy.golang.org go list -m github.com/michael-ryan/cellularautomata/v2@${{ steps.tag-version.outputs.new_tag }}
