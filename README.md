@@ -7,37 +7,42 @@ For using the tool, see [here](https://pkg.go.dev/github.com/michael-ryan/cellul
 For constructing your own automata, see [here](https://pkg.go.dev/github.com/michael-ryan/cellularautomata/models).
 
 ## 🚀 Usage 
-The simplest usage is as follows. In your `main` package, set up a `Config` object and supply it to `Launch`. The below code snippet should be all you need.
+The simplest usage is as follows. In your `main` package, set up a `Config` object and supply it to `Launch`.
 ```Go
 package main
 
 import (
 	"github.com/michael-ryan/cellularautomata"
-	"github.com/michael-ryan/cellularautomata/models"
+	"github.com/michael-ryan/cellularautomata/examples"
 )
 
 func main() {
 	c := cellularautomata.Config{
-		Fps:       15,
-		CellsX:    128,
-		CellsY:    72,
-		WindowX:   1280,
-		WindowY:   720,
-		Automaton: models.NewForest(),
+		Fps:          15,
+		CellsX:       128,
+		CellsY:       72,
+		WindowX:      1280,
+		WindowY:      720,
+		Automaton:    examples.NewForest(),
+		InitialState: 0,
+		SkipEditor:   true,
 	}
 
 	cellularautomata.Launch(c)
 }
 ```
 
-This will open a GUI window. You can click on cells to cycle their initial state, then press `S` on your keyboard to start the simulation. Note: Launch must be called from the main goroutine, due to a limitation in OpenGL.
+This will open a GUI window and run a simulation.
 
-Feel free to fiddle with the config parameters. You can swap out `Automaton` for other sample models (defined [here](models/)), or you can easily construct your own automata. For an example, see the implementation for Conway's Game of Life [here](models/conways.go).
+There is an optional edit mode which the program will start in if `SkipEditor` is `false`. In this mode, you can click on cells to cycle their initial state, then press `S` on your keyboard to start the simulation. 
+
+Note: Launch must be called from the main goroutine, due to a limitation in OpenGL.
+
+Feel free to play with the config parameters. You can swap out `Automaton` for other sample models (defined [here](models/)), or you can easily construct your own automata. For examples, see [here](examples/).
 
 ## 🐛 Known Issues & Planned Improvements
 
 - Analysis tools to record cell state counts and how they change over time.
-- Potentially a revamp to the `models/` API, to make it simpler to use.
 
 ## 🔧 Troubleshooting
 
