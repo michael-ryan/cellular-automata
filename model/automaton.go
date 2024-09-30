@@ -83,7 +83,7 @@ func (a Automaton) GetColouring() []Rgb {
 // All cells will have their transition rules checked, and a new array is returned representing the new states of all the cells.
 //
 // This is a pure function, and will not modify any state, so it is safe to call manually.
-// However, it is not needed to call this manually if using the provided graphical rendering package [github.com/michael-ryan/cellularautomata/].
+// However, it is not needed to call this manually if using the provided graphical rendering package [github.com/michael-ryan/cellularautomata].
 func (a Automaton) Step(c [][]uint) [][]uint {
 	new := make([][]uint, len(c))
 	for x := range len(new) {

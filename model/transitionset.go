@@ -1,5 +1,7 @@
 package model
 
+// Predicate is a function that checks whether a state transition should happen, for a given [Cell].
+// This should be implemented by the caller of [TransitionSet.AddTransition].
 type Predicate func(cell Cell) bool
 
 type transition struct {
@@ -9,7 +11,8 @@ type transition struct {
 
 type TransitionSet [][]transition
 
-// NewTransitionSet creates a new [TransitionSet] for use with [NewAutomaton]
+// NewTransitionSet creates a new [TransitionSet] for use with [NewAutomaton].
+// You should add transitions to it using [TransitionSet.AddTransition].
 func NewTransitionSet() TransitionSet {
 	return make(TransitionSet, 0)
 }
@@ -28,14 +31,14 @@ func NewTransitionSet() TransitionSet {
 //
 // The function should report whether the conditions are met for a state transition.
 //
-// For example, a transition rule where this cell turns from state 0 to state 1 if the cell to the right is in state 1 would look like this:
+// For example, a transition rule where this cell turns from state dead to state alive if the cell to the right is in state alive would look like this:
 //
-//	t.AddTransition(0, 1, func(cell Cell) bool {
+//	t.AddTransition(dead, alive, func(cell Cell) bool {
 //		right, err := cell.Neighbour(1, 0)
 //		if err != nil {
 //			return false
 //		}
-//		return right == 1
+//		return right == alive
 //	})
 func (t *TransitionSet) AddTransition(fromState, toState uint, rule Predicate) {
 	maxIndex := len(*t) - 1
