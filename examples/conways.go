@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 
-	"github.com/michael-ryan/cellularautomata/model"
+	"github.com/michael-ryan/cellularautomata/v2/model"
 )
 
 // NewConways returns a [model.Automaton] that represents Conway's Game of Life.

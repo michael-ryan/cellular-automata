@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/michael-ryan/cellularautomata/model"
+	"github.com/michael-ryan/cellularautomata/v2/model"
 )
 
 // NewForest returns a [model.Automaton] that simulates growing forests.

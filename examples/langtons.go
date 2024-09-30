@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 
-	"github.com/michael-ryan/cellularautomata/model"
+	"github.com/michael-ryan/cellularautomata/v2/model"
 )
 
 // NewLangtons returns a [model.Automaton] that simulates Langton's ant.
