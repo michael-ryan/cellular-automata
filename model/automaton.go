@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"fmt"
@@ -10,19 +10,6 @@ type Rgb struct {
 	R, G, B float64
 }
 
-// At safely indexes the cell matrix c, returning an error if an off-grid value has been indexed.
-func At(c [][]uint, x, y int) (uint, error) {
-	if x < 0 || x >= len(c) {
-		return 0, fmt.Errorf("index x=%v off grid", x)
-	}
-
-	if y < 0 || y >= len(c[0]) {
-		return 0, fmt.Errorf("index y=%v off grid", y)
-	}
-
-	return c[x][y], nil
-}
-
 // Automaton contains all the information needed to describe a cellular automaton. You should use the [NewAutomaton] function to create one.
 type Automaton struct {
 	colouring     []Rgb
@@ -30,10 +17,20 @@ type Automaton struct {
 	states        uint
 }
 
+// at safely indexes the cell matrix c, returning an error if an off-grid value has been indexed.
+func at(c [][]uint, x, y int) (uint, error) {
+	if x < 0 || x >= len(c) || y < 0 || y >= len(c[0]) {
+		return 0, fmt.Errorf("indexed off grid")
+	}
+
+	return c[x][y], nil
+}
+
 // NewAutomaton constructs a new Automaton from a given TransitionSet and colouring setup.
 // For a state n, transitions[n] should describe the transition rules and colouring[n] should define its render colour.
 // It is ill-advised to set up the [TransitionSet] yourself. Rather, you should use [NewTransitionSet] and [TransitionSet.AddTransition].
-// An example of how to set up an automaton is available here: https://github.com/michael-ryan/cellularautomata/blob/master/models/conways.go
+//
+// Examples of how to set up an automaton are available in the [github.com/michael-ryan/cellularautomata/examples] package.
 func NewAutomaton(transitions TransitionSet, colouring []Rgb) (*Automaton, error) {
 	if len(transitions) != len(colouring) {
 		return nil, fmt.Errorf("mismatched lengths of transitions and colouring: %v != %v", len(transitions), len(colouring))
@@ -82,18 +79,11 @@ func (a Automaton) GetColouring() []Rgb {
 	return colouringCopy
 }
 
-// TransitionSet is an array of arrays of transition rules. All transition rules that state n can undergo should be in Transitions[n].
-// It is acceptable for any inner array to be an empty array, to denote a dead-end state.
-func (a Automaton) GetTransitionSet() TransitionSet {
-	transitionsCopy := make(TransitionSet, len(a.transitionSet))
-	for i := range a.transitionSet {
-		transitionsCopy[i] = make([]transition, len(a.transitionSet[i]))
-		copy(transitionsCopy[i], a.transitionSet[i])
-	}
-	return transitionsCopy
-}
-
-// Step simulates a single step. Typically this would not be called manually.
+// Step simulates a single time step.
+// All cells will have their transition rules checked, and a new array is returned representing the new states of all the cells.
+//
+// This is a pure function, and will not modify any state, so it is safe to call manually.
+// However, it is not needed to call this manually if using the provided graphical rendering package [github.com/michael-ryan/cellularautomata/].
 func (a Automaton) Step(c [][]uint) [][]uint {
 	new := make([][]uint, len(c))
 	for x := range len(new) {
@@ -117,12 +107,19 @@ func (a Automaton) Step(c [][]uint) [][]uint {
 			wg.Add(1)
 			go func(x, y int, c [][]uint, model TransitionSet, editChan chan<- edit) {
 				defer wg.Done()
-				thisCell, err := At(c, x, y)
+				thisCell, err := at(c, x, y)
 				if err != nil {
 					panic("Something has gone very wrong. We indexed outside of the grid in the step function.")
 				}
+
+				cell := Cell{
+					x:     x,
+					y:     y,
+					cells: c,
+				}
+
 				for _, t := range model[thisCell] {
-					if t.Predicate(c, x, y) {
+					if t.Predicate(cell) {
 						editChan <- edit{
 							x:        x,
 							y:        y,
