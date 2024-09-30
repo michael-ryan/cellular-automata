@@ -42,8 +42,16 @@ func NewTransitionSet() TransitionSet {
 //	})
 func (t *TransitionSet) AddTransition(fromState, toState uint, rule Predicate) {
 	maxIndex := len(*t) - 1
-	if maxIndex < int(fromState) {
-		for range int(fromState) - maxIndex {
+
+	maxNewState := func(a, b uint) int {
+		if a > b {
+			return int(a)
+		}
+		return int(b)
+	}(fromState, toState)
+
+	if maxIndex < maxNewState {
+		for range maxNewState - maxIndex {
 			*t = append(*t, make([]transition, 0))
 		}
 	}
